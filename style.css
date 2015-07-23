@@ -1,0 +1,71 @@
+body{
+  background-color:#242442
+}
+
+.tile{
+  
+  font-family:Verdana;
+  overflow:auto;
+  width:121px;
+  height:200px;
+  background-color: #7D9FBB;
+  border: solid black 5px;
+}
+
+.tile:hover{
+  
+  border: solid yellow 5px;
+}
+
+#enemy{
+  display:inline-block;
+  background-color: #7DFFBB;
+}
+
+#enemy:hover{
+  border: solid red 5px;
+}
+
+#unfriendly:hover{
+  border: solid red 5px;
+}
+
+
+
+#player{
+  display:inline-block;
+  background-color: #7DFFBB;
+}
+
+#unfriendly{
+  display: inline-block;
+}
+
+#friendly{
+  display:inline-block;
+}
+
+#board{
+  background-color:#A4A444;
+  position:relative;
+  border: solid #D4A44D 5px;
+  border-radius:10px;
+  width:1000px;
+  margin:auto
+}
+
+#space{
+  height:200px;
+}
+
+#history{
+  
+  background-color:#11A4BB;
+  border: solid #D4A44D 5px;
+  border-radius:10px;
+  height:400px;
+  width:1000px;
+  margin:auto;
+  text-align:center;
+  color:white;
+}
