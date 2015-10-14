@@ -2,6 +2,14 @@ body{
   background-color:#242442
 }
 
+#splash{
+
+  height: 300px;
+  width:1000px;
+  margin:auto;
+
+}
+
 .tile{
   
   font-family:Verdana;
@@ -30,7 +38,10 @@ body{
   border: solid red 5px;
 }
 
-
+#selected{
+  display:inline-block;
+  background-color: #0055BB;
+}
 
 #player{
   display:inline-block;
@@ -44,6 +55,18 @@ body{
 #friendly{
   display:inline-block;
 }
+
+#friendlyMage{
+  display:inline-block;
+  background-color: #AB40CF;
+}
+
+#friendlyMageLow{
+  display:inline-block;
+  background-color: #CCBED1;
+}
+
+
 
 #board{
   background-color:#A4A444;
@@ -68,4 +91,5 @@ body{
   margin:auto;
   text-align:center;
   color:white;
+  overflow:auto;
 }
