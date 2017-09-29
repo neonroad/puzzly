@@ -33,99 +33,34 @@ var playerATK = 2;
 var mana = 5;
 var spellDMG = 0
 var skipguy = 0; //if necessary, skip updating this guy
+
+//Preset tiles saved in an array for convenience?
+presetTiles = [];
+
+
 //Fighting
 fight = function(guy1, guy2){ //1 = playerside
   //var skipguy = 0; //if necessary, skip updating this guy
+  
   if(guy1.mainTile == 1){
     guy1.actualtile.id = "player";
   }
   else{
     guy1.actualtile.id = "friendly";
   }
-  for(var i=0; i<playerSideMin.length; i++){ //Friendly buff activating on minion fight
-    if(playerSideMin[i] !== ""){
-      for(var b = 0; b<playerSideMin[i].buffs.length; b++){
-        if(playerSideMin[i].buffs[b] == 'spawnSpider'){
-          if(minionAttack == 1){
-            newMinion = new tile('Spider', 1, 1, "", "spider2");
-            playerSideMin.push(newMinion);
-            newMinion.createFriendlyTile();    
-
-            History.innerHTML += "<br>Because of " + playerSideMin[i].name + "'s special ability, a Spider was spawned.";
-            playerSideMin[i].hp = 0;
-            playerSideMin[i].update();
-            break;
-          }
-
-        }
-      }
-    }
-  }
-
-  for(var i=0; i<enemySideMin.length; i++){ //Enemy buff activating on minion fight
-    if(enemySideMin[i] !== ""){
-      for(var b = 0; b<enemySideMin[i].buffs.length; b++){
-
-        if(enemySideMin[i].buffs[b] == 'spawnSpider'){
-          if(minionAttack == 1){
-            newMinion = new tile('Spider', 1, 1, "", "spider2");
-            enemySideMin.push(newMinion);
-            newMinion.createEnemyTile();    
-
-            History.innerHTML += "<br>Because of " + enemySideMin[i].name + "'s special ability, a Spider was spawned.";
-            enemySideMin[i].hp = 0;
-            skipguy = 1;
-            enemySideMin[i].update();
-            targeting = 0;
-
-            minionAttack = 0;
-            break;
-          }
-
-        }
-      }
-    }
-  }
-
+  
   guy1.hp -= guy2.atk;
   History.innerHTML += "<br>Friendly " + guy1.name + " attacked " + guy2.name + " for " + guy1.atk + " damage.";
 
   guy2.hp -= guy1.atk;
   History.innerHTML += "<br>In return, enemy " + guy2.name + " did " + guy2.atk + " damage to " + guy1.name + "."; 
 
-  for(var p = 0; p<guy1.buffs.length; p++){
-    
-    if(guy1.buffs[p] == 'batsteal'){
-      for(var i=0; i<playerSideMin.length; i++){
-        if(playerSideMin[i].mainTile == 1){
-          History.innerHTML += "<br>...Because of enemy " + guy1.name + "'s special ability, " + playerSideMin[i].name + " were healed " + guy1.atk + " health.";
-          playerSideMin[i].hp += guy1.atk;
-          playerSideMin[i].update();
-        }
-      }
-    }
-  }
-  if(skipguy !== 2){
-    for(var t = 0; t<guy2.buffs.length; t++){
-      if(guy2.buffs[t] == 'batsteal'){
-        for(var i=0; i<enemySideMin.length; i++){
-          if(enemySideMin[i].mainTile == 1){
-            History.innerHTML += "<br>...Because of friendly " + guy2.name + "'s special ability, " + enemySideMin[i].name + " was healed " + guy2.atk + " health.";
-            enemySideMin[i].hp += guy2.atk;
-            enemySideMin[i].update();
-          }
-        }
-      }
-    }
-  }
+  
+  guy1.update();
 
 
-  if(guy2.atk > 0){
-    guy1.update();
-  }
-  if(skipguy !== 2 && guy1.atk > 0){
-    guy2.update();
-  }
+  guy2.update();
+  
   targeting = 0;
 
   minionAttack = 0;
@@ -221,6 +156,106 @@ despelltarget = function(tile){
   cast(fighter,tile,fighter.tome);
 }
 
+nextLevel = function(){
+    dLevel++;
+    descend = 1;
+    for(var j = 0; j < enemySideMin.length; j++){
+      if(enemySideMin[j] !== ""){
+        History.innerHTML += "<br>Enemy " + enemySideMin[j].name + " surrendered and joined your party!"
+
+        if(enemySideMin[j].spell == 'yes'){
+          
+          newSpellMinion = new tile(enemySideMin[j].name,enemySideMin[j].hp,enemySideMin[j].atk,enemySideMin[j].special,enemySideMin[j].imageURL);
+          newSpellMinion.spell = enemySideMin[j].spell;
+          newSpellMinion.mna = enemySideMin[j].mna;
+          newSpellMinion.maxmna = enemySideMin[j].maxmna;
+          newSpellMinion.tome = enemySideMin[j].tome;
+          newSpellMinion.costs = enemySideMin[j].costs;
+          playerSideMin.push(newSpellMinion);
+          newSpellMinion.createFriendlyTile();
+          enemySide.removeChild(enemySideMin[j].actualtile);
+          enemySideMin.splice(enemySideMin[j].position, 1, "");
+          Edivnum--;
+          Fdivnum--;
+          
+        }
+        else{
+          newMinion = new tile(enemySideMin[j].name, enemySideMin[j].hp, enemySideMin[j].atk, enemySideMin[j].special, enemySideMin[j].imageURL)
+          playerSideMin.push(newMinion);
+          newMinion.buffs = enemySideMin[j].buffs
+          newMinion.createFriendlyTile();
+          //console.log(Fdivnum)
+          //newMinion = new tile('spider', 2, 1, "", "spider");
+          //enemySideMin.push(newMinion);
+          //newMinion.createEnemyTile();
+          //console.log(enemySideMin[j]);
+          enemySide.removeChild(enemySideMin[j].actualtile);
+          enemySideMin.splice(enemySideMin[j].position, 1, "");
+          Edivnum--;
+          Fdivnum--;
+
+        }
+        //newMinion.update()
+        //Update all minions on friendly side now that they moved
+        for (var i = 0; i < playerSideMin.length; i++) {
+          if(playerSideMin[i] != ""){
+            playerSideMin[i].update();
+          }
+          
+        };
+        
+      }
+    }
+    enemySideMin = []
+
+    //next level spawns:
+
+    if(dLevel > 1 && dLevel < 150){
+      rand = 1;
+      if(rand == 1){
+        newMinion = new tile('spider', 2, 1, "", "spider");
+        newMinion.mainTile = 1;
+        enemySideMin.push(newMinion);
+        newMinion.createEnemyTile();
+      }
+      else if(rand ==2){
+        newMinion = new tile('slime', 2, 1, "When this minion survives a hit, summon a slime with one less health.", "slime");
+        newMinion.mainTile = 1;
+        newMinion.buffs.push('slimecreate');
+        enemySideMin.push(newMinion);
+        newMinion.createEnemyTile();
+      }
+    }
+
+    for (var i = 0; i <rand; i++) {
+      rand = 2;
+      if(rand == 1){
+        newMinion = new tile('magic spider', 1 , 1, "Spell damage + 1", "spider2");
+        enemySideMin.push(newMinion);
+        newMinion.buffs.push('spellDMG1');
+        newMinion.createEnemyTile();
+      }
+      else if(rand == 2){
+        newSpellMinion = new tile('holy mage',1,0,"Give a tile +2 HP for 3 MANA","holyKnight");
+        newSpellMinion.spell = 'yes';
+        newSpellMinion.mna = 4;
+        newSpellMinion.maxmna = 4;
+        newSpellMinion.costs = 3;
+        newSpellMinion.tome = 'Lesser Heal';
+        enemySideMin.push(newSpellMinion);
+        newSpellMinion.createEnemyTile();
+      }
+      
+    };
+    for(var m = 0; m <playerSideMin.length; m++){
+      if(playerSideMin[m].spell == 'yes' && playerSideMin[m].mna < playerSideMin[m].maxmna){
+        playerSideMin[m].mna += 1;
+        playerSideMin[m].update();
+      }
+    }
+
+}
+
 //Describing what a 'tile' holds
 var Fdivnum = 6;
 var Edivnum = 3;
@@ -232,6 +267,7 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
 
   this.name = name;
   this.hp = hp;
+  this.maxhp = hp;
   this.atk = atk;
   this.special = special;
   this.imageURL = imageURL;
@@ -401,14 +437,20 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
       }
     }
 
+    //enemySideMin.push(this);
+  };
     
-    currentTile.onclick = function(){
+  
+  this.update = function(){
+
+    if(currentTile != undefined && this.friendly == 1){
+      currentTile.onclick = function(){
         if(targeting == 0 && playerSideMin[position].atk >= 1 && playerSideMin[position].spell !== 'yes'){
           target(playerSideMin[position]);
           currentTile.id = "selected";
         }
         else if(targeting == 0 && playerSideMin[position].atk <= 0 && playerSideMin[position].spell !== 'yes'){
-          History.innerHTML = "<br> This tile has no attack.";
+          History.innerHTML = "<br> This tile has no attack value.";
           targeting = 0;
           $("body").css("cursor","auto");  
         }
@@ -479,16 +521,11 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
           $("body").css("cursor","auto");
         }
       }
-  };
-    
-  
-  
-  
-  
-  
+    }
 
-  this.update = function(){
-
+    if(this.hp > this.maxhp){
+      this.hp = this.maxhp;
+    }
 
     if(this.hp <= 0){
       this.alreadyDead = 0;
@@ -502,6 +539,7 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
         console.log("cleared");
         skipguy = 2;
         enemySideMin.splice(this.position, 1, "");
+        //console.log(currentTile);
         enemySide.removeChild(currentTile);
         Edivnum--;
         Fdivnum--;
@@ -509,8 +547,8 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
        // toUpdate = [];
 
         if(lose !== 1 && ongoingUpdate == 0){
-          alert("Descending to next level...");
-          dLevel++;
+          //alert("Descending to next level...");
+          /**dLevel++;
           descend = 1;
           for(var j = 0; j < enemySideMin.length; j++){
             if(enemySideMin[j] !== ""){
@@ -551,8 +589,8 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
               
             }
           }
-          enemySideMin = []
-          function nextLevel(){
+          enemySideMin = []**/
+          /**function nextLevel(){
             if(dLevel > 1 && dLevel < 150){
               rand = Math.floor((Math.random() * 3) + 1);
               if(rand == 1 && dLevel < 5){
@@ -568,20 +606,6 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
                 enemySideMin.push(newMinion);
                 newMinion.createEnemyTile();
               }
-              else if(rand == 3){
-                newMinion = new tile('magic spider', 1 , 1, "Spell damage + 1", "spider2");
-                newMinion.mainTile = 1;
-                enemySideMin.push(newMinion);
-                newMinion.buffs.push('spellDMG1');
-                newMinion.createEnemyTile();
-              }
-              else if(rand == 1 && dLevel >= 5){
-                newMinion = new tile('guard', 4 , 4, "Guards other non-guard tiles from PHYSICAL DAMAGE", "deathKnight");
-                newMinion.mainTile = 1;
-                enemySideMin.push(newMinion);
-                newMinion.buffs.push('guard');
-                newMinion.createEnemyTile();
-              }
             }
            
             for (var i = 0; i <rand; i++) {
@@ -590,39 +614,6 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
                 newMinion = new tile('magic spider', 1 , 1, "Spell damage + 1", "spider2");
                 enemySideMin.push(newMinion);
                 newMinion.buffs.push('spellDMG1');
-                newMinion.createEnemyTile();
-              }
-              else if(rand == 2 && (dLevel < 10 && dLevel < 15)){
-                newMinion = new tile('slime', 2, 1, "When this minion survives a hit, summon a slime with one less health.", "slime");
-                newMinion.buffs.push('slimecreate');
-                enemySideMin.push(newMinion);
-                newMinion.createEnemyTile();
-              }
-              else if(rand == 3 && (dLevel > 1 && dLevel < 5)){
-                newMinion = new tile('spider', 2, 1, "", "spider");
-                enemySideMin.push(newMinion);
-                newMinion.createEnemyTile();
-              }
-              else if(rand == 3 && (dLevel > 5 && dLevel < 150)){
-                newSpellMinion = new tile('mage',2,0,"Deal 2 damage (Enhanced with friendly spell damage) for 2 MANA","darkMage");
-                newSpellMinion.spell = 'yes';
-                newSpellMinion.mna = 2;
-                newSpellMinion.costs = 2;
-                newSpellMinion.maxmna = 2;
-                newSpellMinion.tome = 'Magic Missile';
-                enemySideMin.push(newSpellMinion);
-                newSpellMinion.createEnemyTile();
-              }
-              else if(rand == 4 && (dLevel > 5 && dLevel < 150)){
-                newMinion = new tile('bomb', 1, 1, "When this tile dies, deal 1 damage to ALL TILES", "bomb");
-                newMinion.buffs.push('bomb1');
-                enemySideMin.push(newMinion);
-                newMinion.createEnemyTile();
-              }
-              else if(rand == 5 && (dLevel > 10 && dLevel < 150)){
-                newMinion = new tile('guard', 4, 4, "Guards other non-guard tiles from PHYSICAL DAMAGE", "deathKnight");
-                newMinion.buffs.push('guard');
-                enemySideMin.push(newMinion);
                 newMinion.createEnemyTile();
               }
               else if(rand == 2 && (dLevel >= 10 && dLevel < 150)){
@@ -644,7 +635,7 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
               }
             }
 
-          }
+          }**/
           nextLevel();
           //skipguy = 0;
           //enemySideMin = []
@@ -659,7 +650,7 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
       }
       else if(currentTile.id == "friendly" || currentTile.id == "friendlyMage" || currentTile.id == "friendlyMageLow" || currentTile.id == "selected"){
         History.innerHTML += "<br> Friendly "+ name + " died.";
-        for(var y = 0; y<this.buffs.length; y++){
+        for(var  y = 0; y<this.buffs.length; y++){
           if(this.buffs[y] == 'gnomeHurt'){
             for(var i=0; i<playerSideMin.length; i++){
               if(playerSideMin[i].mainTile == 1){
@@ -732,9 +723,24 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
           }
         }
         if(this.alreadyDead == 0){
+          this.actualtile.id = "friendly";
           playerSideMin.splice(this.position, 1, "")
           playerSide.removeChild(currentTile);
           Fdivnum--;
+
+          console.log(playerSideMin);
+            
+          //remove "" from array
+          /*
+          for (var i = 0; i < playerSideMin.length; i++) {
+
+            if(playerSideMin[i] == ""){
+              playerSideMin.splice(i,1);
+              i--;
+            }
+            playerSideMin[i].position --;
+          };
+          */
         }
       }
       else if(currentTile.id == "player"){
@@ -831,16 +837,18 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
     }
     
     if(this.spell == 'yes'){
-      if(currentTile.id == "unfriendly"){
-        currentTile.id = "unfriendly";
-        currentTile.innerHTML="<img src='assets/"+ imageURL + ".png' height='100' width='100'><span id='name'> <br>"+this.name +"<br><strong>"+this.hp+"</strong> Health<strong><br>"+this.mna+"</strong> Mana<br>---<br>"+this.special;
+      
+      currentTile.innerHTML= "<img src='assets/"+ imageURL + ".png' height='100' width='100'><span id='name'> <br>"+this.name +"<br><strong>"+this.hp+ "/" + this.maxhp + "</strong> Health<strong><br>"+this.mna+ "/" + this.maxmna + "</strong> Mana<br>---<br>"+this.special;
 
+      if(currentTile.id == "unfriendly"){
+        //currentTile.id = "unfriendly";
       }
+
       else{
-        currentTile.innerHTML="<img src='assets/"+ imageURL + ".png' height='100' width='100'><span id='name'> <br>"+this.name +"<br><strong>"+this.hp+"</strong> Health<strong><br>"+this.mna+"</strong> Mana<br>---<br>"+this.special;
-        console.log(this.costs);
+        //currentTile.innerHTML="<img src='assets/"+ imageURL + ".png' height='100' width='100'><span id='name'> <br>"+this.name +"<br><strong>"+this.hp+"</strong> Health<strong><br>"+this.mna+"</strong> Mana<br>---<br>"+this.special;
+        //console.log(this.costs);
         if(this.costs > this.mna){
-          console.log("OOM!");
+          //console.log("OOM!");
           currentTile.id = "friendlyMageLow";
         }
         else{
@@ -878,14 +886,15 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
 
       }
       else{
+        
         if(this.spell !== 'yes'){
-          currentTile.innerHTML="<img src='assets/"+ imageURL + ".png' height='100' width='100'><span id='name'> <br>"+this.name +"<br><strong>"+this.hp+"</strong> Health<strong><br>"+this.atk+"</strong> Attack<br>---<br>"+this.special;
+          currentTile.innerHTML="<img src='assets/"+ imageURL + ".png' height='100' width='100'><span id='name'> <br>"+this.name +"<br><strong>"+this.hp+ "/" + this.maxhp +  "</strong> Health<strong><br>"+this.atk+"</strong> Attack<br>---<br>"+this.special;
         }
 
       }
     }
     if(this.mainTile == 1){
-      currentTile.innerHTML="<img src='assets/"+ imageURL + ".png' height='100' width='100'><span id='name'> <br>"+this.name +"<br><strong>"+this.hp+"</strong> Health<strong><br>"+this.atk+"</strong> Attack<br>---<br>"+this.special;
+      //currentTile.innerHTML="<img src='assets/"+ imageURL + ".png' height='100' width='100'><span id='name'> <br>"+this.name +"<br><strong>"+this.hp+ "/" + this.maxhp + "</strong> Health<strong><br>"+this.atk+"</strong> Attack<br>---<br>"+this.special;
 
     }
     
@@ -897,183 +906,54 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
 
 //what the player is
 player = new tile('You', 10, 2, "Main tile - If this tile dies, you lose!", "playertile");
+presetTiles.push(player);
+
+/*
 player.mainTile = 1;
 playerSideMin.push(player);
 player.position = playerSideMin.length-1;
 player.createFriendlyTile();
-
-/**player.update = function(){
-    playerText.innerHTML = player.name +"<br><strong>"+player.hp+"</strong> Health<strong><br>"+player.atk+"</strong> Attack<br><strong>"+player.mana+"</strong> Mana<br>"+player.special;
-  };
 player.update();
-**/
-//playerText.innerHTML = "<br><strong>"+player.hp +"</strong> Health <br><strong>"+ player.atk + "</strong> Attack<br><strong>"+player.mana +" </strong>Mana"+"<br>"+player.special;
-
-
-//What our enemy is
-
-//var enemyText = document.getElementById('enemyText');
-
-/**
-enemyTile = new tile('Skeleton',6,6,"Main tile - If this tile dies, you win! <br>---<br>Cannot be attacked while other tiles on this side still exist.", "skellytile");
-enemyTile.mainTile = 1;
-enemySideMin.push(enemyTile);
-enemyTile.buffs.push("skellyimmune");
-enemyTile.position = enemySideMin.length-1;
-enemyTile.createEnemyTile();
-**/
-
-
-
-
-//enemyText.innerHTML = enemyTile.name +"<br><strong>"+enemyTile.hp+"</strong> Health<strong><br>"+enemyTile.atk+"</strong> Attack<br>"+enemyTile.special;
-
-
-
-
-
-
-//Targeting CONTINUED
-
-/**$(document).ready(function(){
-
-  $("#enemy").mousedown(function(){
-      if(targeting == 1){
-        targeting = 0;
-        $("body").css("cursor","auto");
-      }
-      else if(targeting === 0){
-        History.innerHTML += "<br>You must choose a tile from your side to play.";
-      }
-    });
-  
-   $("body").mousedown(function(){
-     if(targeting == 1){
-       History.innerHTML+= "<br>That is not a valid target.";
-       targeting = 0;
-       $("body").css("cursor","auto");
-     }
-   });
-   $("#player").mousedown(function(){
-     if(targeting == 1){
-       History.innerHTML+= "<br>You can't target yourself.";
-       $("body").css("cursor","auto");
-       targeting = 0;
-     }
-   });**/
-  
-
+*/
 
 
 
 
 //Random mob
 
-/**minion1 = new tile('Bat',2,2,"Heals MAIN TILE for amount of damage done","bat");
-playerSideMin.push(minion1);
-minion1.batSteal = 1;
-minion1.position = playerSideMin.length-1;
-minion1.createFriendlyTile(minion1.position);
-**/
-/**
-for(var i=0;i<3;i++){
-  newMinion = new tile('Bat',2,2,"Heals MAIN TILE for amount of damage done","bat");
-  playerSideMin.push(newMinion);
-  newMinion.buffs.push('batsteal');
-  newMinion.position = playerSideMin.length-1;
-  newMinion.createFriendlyTile();
+skeletonTile = new tile('Entrance Skeleton', 2, 3, "\"You shall not pass!\"", "skellyTile");
+presetTiles.push(skeletonTile);
+
+/*
+newMinion = skeletonTile;
+newMinion.mainTile = 1;
+enemySideMin.push(newMinion);
+newMinion.createEnemyTile();
+*/
+
+makeATile = function(tileT, enemy, main){
+  newTile = new tile(tileT.name, tileT.hp, tileT.atk, tileT.special, tileT.imageURL);
+  if(main){
+    newTile.mainTile = 1;
+    newTile.special += "<br> <strong> [MAIN TILE] </strong>";
+  }
+  if(enemy){
+    enemySideMin.push(newTile);
+    newTile.createEnemyTile();
+  }
+  else{
+    playerSideMin.push(newTile);
+    newTile.createFriendlyTile();
+  }
+  newTile.update();
+  return newTile;
 }
-for(var i=0;i<2;i++){
-  newMinion = new tile('Bat',2,2,"Heals MAIN TILE for amount of damage done","bat");
-  enemySideMin.push(newMinion);
-  newMinion.buffs.push('batsteal');
-  newMinion.position = enemySideMin.length-1;
-  newMinion.createEnemyTile();
-}
-newMinion = new tile('Ooze', 1, 3, "When this tile dies, deal 2 damage to the MAIN TILE", "icky");
-playerSideMin.push(newMinion);
-newMinion.buffs.push('gnomeHurt');
-newMinion.createFriendlyTile();
 
-newMinion = new tile('Ooze', 1, 3, "When this tile dies, deal 2 damage to the MAIN TILE", "icky");
-enemySideMin.push(newMinion);
-newMinion.buffs.push('gnomeHurt');
-newMinion.createEnemyTile();
+playerTile = makeATile(player, false, true);
 
-newMinion = new tile('Death Knight', 1, 1, "TAUNT: This tile must be attacked.", "deathKnight");
-enemySideMin.push(newMinion);
-newMinion.buffs.push('taunt');
-newMinion.createEnemyTile();
+testMin = makeATile(skeletonTile, true, true);
 
-newMinion = new tile('Death Knight', 1, 1, "TAUNT: This tile must be attacked.", "deathKnight");
-enemySideMin.push(newMinion);
-newMinion.buffs.push('taunt');
-newMinion.createEnemyTile();
-**/
-newMinion = new tile(' spider', 2, 1, "", "spider");
-newMinion.mainTile = 1
-enemySideMin.push(newMinion);
-newMinion.createEnemyTile();
-/**
-for (var i = 0; i <1; i++) {
-  newMinion = new tile('spider', 1 , 1, "", "spider");
-  enemySideMin.push(newMinion);
-  newMinion.createEnemyTile();
+for (var i = 0; i < 3; i++) {
+  testMin = makeATile(skeletonTile, true);
 };
 
-newSpellMinion = new tile('mage',2,0,"Deal 2 damage (Enhanced with friendly spell damage)","darkMage");
-newSpellMinion.spell = 'yes';
-newSpellMinion.mna = 2;
-newSpellMinion.maxmna = 2;
-newSpellMinion.tome = 'Magic Missile'
-newSpellMinion.costs = 2;
-playerSideMin.push(newSpellMinion);
-newSpellMinion.createFriendlyTile();
-
-for (var i = 0; i <1; i++) {
-  newMinion = new tile('magic spider', 1 , 1, "Spell damage + 1", "spider2");
-  enemySideMin.push(newMinion);
-  newMinion.buffs.push('spellDMG1');
-  newMinion.createEnemyTile();
-};
-
-newMinion = new tile('slime', 4, 1, "When this tile survives a hit, summon another slime with one less health.", "slime");
-newMinion.buffs.push('slimecreate');
-enemySideMin.push(newMinion);
-newMinion.createEnemyTile();
-
-newMinion = new tile('bomb', 1, 1, "When this tile dies, deal 1 damage to ALL TILES.", "bomb");
-newMinion.buffs.push('bomb1');
-enemySideMin.push(newMinion);
-newMinion.createEnemyTile();
-
-/**
-newMinion = new tile('guard', 4,4, "This tile is protecting the other tiles from incoming PHYSICAL damage.", "deathKnight");
-newMinion.buffs.push('guard');
-enemySideMin.push(newMinion);
-newMinion.createEnemyTile();
-
-newMinion = new tile('guard', 4,4, "This tile is protecting the other tiles from incoming PHYSICAL damage.", "deathKnight");
-newMinion.buffs.push('guard');
-enemySideMin.push(newMinion);
-newMinion.createEnemyTile();
-
-newSpellMinion = new tile('mage',2,0,"Deal 2 damage (Enhanced with friendly spell damage)","darkMage");
-newSpellMinion.spell = 'yes';
-newSpellMinion.mna = 2;
-newSpellMinion.maxmna = 2;
-newSpellMinion.costs = 2;
-newSpellMinion.tome = 'Magic Missile'
-playerSideMin.push(newSpellMinion);
-newSpellMinion.createFriendlyTile();
-
-
-newSpellMinion = new tile('holy mage',1,0,"Give a tile +2 hp","holyKnight");
-newSpellMinion.spell = 'yes';
-newSpellMinion.mna = 4;
-newSpellMinion.costs = 3;
-newSpellMinion.maxmna = 4;
-newSpellMinion.tome = 'Lesser Heal'
-playerSideMin.push(newSpellMinion);
-newSpellMinion.createFriendlyTile();
-**/
