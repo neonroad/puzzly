@@ -44,10 +44,10 @@ fight = function(guy1, guy2){ //1 = playerside
 
   
   if(guy1.mainTile == 1){
-    guy1.actualtile.id = "player";
+    //guy1.actualtile.id = "player";
   }
   else{
-    guy1.actualtile.id = "friendly";
+   // guy1.actualtile.id = "friendly";
   }
   
   guy1.hp -= guy2.atk;
@@ -377,7 +377,7 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
 
         //remove from existence
         if(this.markForDeath == true){
-          this.actualtile.id = "friendly";
+          //this.actualtile.id = "friendly";
 
           //find in array
           if(findInArray(this,playerSideMin) != undefined){
@@ -485,7 +485,7 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
 
     }
     
-    this.actualtile = currentTile;
+    //this.actualtile = currentTile;
     
   };
   
