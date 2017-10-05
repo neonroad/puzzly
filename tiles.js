@@ -14,7 +14,7 @@ presetTiles.push(playerTile);
 
 //Dungeone enemies
 
-skeletonTile = new tile('Entrance Skeleton', 2, 1, "\"You shall not pass!\"", "skellyTile");
+skeletonTile = new tile('Entrance Skeleton', 2, 10, "\"You shall not pass!\"", "skellyTile");
 skeletonTile.quote = "No guts, no fear!";
 skeletonTile.deathQuote = "No fear, no life...";
 presetTiles.push(skeletonTile);

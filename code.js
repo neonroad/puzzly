@@ -160,15 +160,35 @@ surrenderSide = function(side){
   for (var i = 0; i < side.length; i++) {
     var t = side[i];
     if(t.mainTile != 1){
+
+      var tempTile = makeATile(t, t.friendly);
+
+
+      //History text
       if(t.friendly != 1){
         History.innerHTML += "<br><span id='unfriendlyName'>" + t.name + "</span> surrendered!";
+
+
       }
       else{
         History.innerHTML += "<br><span id='friendlyName'>" + t.name + "</span> surrendered!";
+
+
       }
+
+
+      //New tile
+
     }
+
+    t.currentTile.remove();
+    side.splice(i,1);
+    i--;
+  
   };
 
+  //out of loop
+  
 }
 
 nextLevel = function(){
@@ -249,6 +269,7 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
     //+this.name +":<br><strong>"+this.hp+"</strong> Health<strong><br>"+this.atk+"</strong> Attack<br>---<br>"+this.special;
 
     currentTile = this.tileElement;
+    this.currentTile = currentTile;
   }
 
   
@@ -260,7 +281,7 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
       currentTile.parent = this;
 
       //when this tile is clicked
-      currentTile.onclick = function(){
+      currentTile.onmousedown = function(){
         
         //If the tile can attack
         if(targeting == 0 && this.parent.atk >= 1 && this.parent.spell == false){
@@ -286,7 +307,7 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
       currentTile.parent = this;
 
       //when this tile is clicked
-      currentTile.onclick = function(){
+      currentTile.onmousedown = function(){
 
         //clicking an enemy first
         if(targeting == 0){
@@ -318,7 +339,7 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
 
     //If minion dies
 
-    if(this.hp <= 0){
+    if(this.hp <= 0 || this.markForDeath){
       this.markForDeath = true;
       //this.name = "DEAD";
 
@@ -468,6 +489,7 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
     
   };
   
+
 };
 
 
@@ -480,7 +502,7 @@ makeATile = function(tileT, enemy, main){
 
   if(main){
     newTile.mainTile = 1;
-    newTile.special += "<br> <strong> [MAIN TILE] </strong>";
+    newTile.special += "<br><strong> [MAIN TILE] </strong><br>";
   }
   if(enemy){
     enemySideMin.push(newTile);
