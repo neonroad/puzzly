@@ -78,7 +78,7 @@ fighter = "";
 //find in array function
 findInArray = function(search, array){
   for(var x = 0; x < array.length; x++){
-    if(array[x] = search){
+    if(array[x] == search){
       return x;
     }
   }
@@ -160,33 +160,31 @@ surrenderSide = function(side){
   for (var i = 0; i < side.length; i++) {
     var t = side[i];
     if(t.mainTile != 1){
-
-      var tempTile = makeATile(t, t.friendly);
-
+      //t.update();
+      makeATile(t, t.friendly);
+      console.log(t);
 
       //History text
       if(t.friendly != 1){
         History.innerHTML += "<br><span id='unfriendlyName'>" + t.name + "</span> surrendered!";
-
-
       }
       else{
         History.innerHTML += "<br><span id='friendlyName'>" + t.name + "</span> surrendered!";
-
-
       }
+      t.currentTile.remove();
 
 
       //New tile
 
     }
-
-    t.currentTile.remove();
-    side.splice(i,1);
-    i--;
-  
+    //t.currentTile.remove();
   };
 
+  
+  for (var i = side.length; i >=0 .length; i--) {
+    side.splice(i,1);
+    side[i].currentTile.remove();
+  };
   //out of loop
   
 }
@@ -475,7 +473,7 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
         
         if(this.spell !== true){
           currentTile.innerHTML="<img src='assets/"+ imageURL + ".png' height='100' width='100'><span id='name'> <br>"
-          +this.name +":<br><strong>"+this.hp+ "/" + this.maxhp +  "</strong> Health<strong><br>"+this.atk+"</strong> Attack<br>---<br>"+this.special;
+          +this.name +":<br><span id='friendlyName'>"+this.hp+ "/" + this.maxhp +  "</span> Health<span id='unfriendlyName'><br>"+this.atk+"</span> Attack<br>---<br>"+this.special;
         }
 
       }
