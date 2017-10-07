@@ -1,5 +1,6 @@
 body{
-  background-color:#242442
+  background-color:#242442;
+  position:relative;
 }
 
 #splash{
@@ -10,6 +11,34 @@ body{
 
 }
 
+#hand{
+  background-color:#A4A444;
+  position:absolute;
+  border: solid #D4A44D 5px;
+  border-radius:10px;
+  width:300px;
+  top:0px;
+  text-align: center;
+  display: block;
+}
+
+#tileCost{
+  top:-5px;
+  left:-5px;
+  z-index: 1;
+  position: absolute;
+  border: solid black 5px;
+  font-style: Courier;
+  font-weight: bold;
+  font-size: 20px;
+  background-color: green;
+}
+
+#cardText{
+  position: absolute;
+  top:-10px;
+}
+
 .tile{
   
   font-family:Verdana;
@@ -18,11 +47,45 @@ body{
   height:200px;
   background-color: #7D9FBB;
   border: solid black 5px;
+  font-size: 10px;
+  display:inline-block;
+  position: relative;
+}
+
+.tileSummon{
+  font-family:Verdana;
+  overflow:auto;
+  width:121px;
+  height:200px;
+  background-color: #86B043;
+  border: solid black 5px;
+  font-size: 10px;
+  display:inline-block;  
+  position: relative;
+}
+
+.tileSummon:hover{
+  border:solid green 5px;
 }
 
 .tile:hover{
   
   border: solid yellow 5px;
+}
+
+#summonUnavailable{
+  background-color: #3F403D;
+}
+#summonAvailable{
+  background-color: #96E319;
+}
+
+#summonCost{
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+  background-color: #C48B27;
+  color:white;
 }
 
 #enemy{
@@ -73,7 +136,7 @@ body{
   position:relative;
   border: solid #D4A44D 5px;
   border-radius:10px;
-  width:1000px;
+  width:1050px;
   margin:auto
 }
 
@@ -87,9 +150,52 @@ body{
   border: solid #D4A44D 5px;
   border-radius:10px;
   height:400px;
-  width:1000px;
+  width:1050px;
   margin:auto;
   text-align:center;
   color:white;
   overflow:auto;
+  font-size: 15px;
 }
+
+#death{
+  background-color: #878787;
+  color: black;
+  font-weight: bold;
+  font-size: 20px;
+  /*border: solid black 5px;*/
+}
+
+#friendlyCombat{
+  /*background-color: #C1FA9D;*/
+  color: black;
+  font-weight: bold;
+  font-size: 20px; 
+}
+
+#unfriendlyCombat{
+  /*background-color: #C75656;*/
+  color: black;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+#quote{
+  background-color: #98B0B8;
+  color: black;
+}
+
+#unfriendlyName{
+  background-color: #B53C3C;
+  font-weight: bold;
+  font-size: 20px;
+  color:black;  
+}
+
+#friendlyName{
+    background-color: #4FCF00;
+    font-weight: bold;
+    font-size: 20px;
+    color: black;
+}
+

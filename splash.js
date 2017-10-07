@@ -17,11 +17,17 @@ playGame = function(){
 	History.innerHTML = "You  enter the dungeon!";
 	titleScreen = 0;
 	space.id = "space";
+	
 	var x = document.createElement("SCRIPT");
 	x.type = "text/javascript";
 	x.src = "code.js";
 	board.appendChild(x);
-	board.removeChild(y);
+	y.remove();
+
+	var z = document.createElement("SCRIPT");
+	z.type = "text/javascript";
+	z.src = "tiles.js";
+	board.appendChild(z);
 	//<script type="text/javascript" src="code.js"></script>
 	
 }
