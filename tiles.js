@@ -105,12 +105,27 @@ presetTiles.push(dungeonBarbarianTile);
 
 
 //Unique effects
-glitchTile = new tile('Unknown Entity', getRandomIntInclusive(1,5),getRandomIntInclusive(1,5), "<strong>Exists</strong> with <strong>random</strong> Health and <strong>random</strong> attack. <br> \'1010\'", 'glitch');
+glitchTile = new tile('Unknown Entity', getRandomIntInclusive(1,5),getRandomIntInclusive(1,5), "<strong>Exists</strong> with <strong>random</strong> Health and <strong>random</strong> attack.", 'glitch');
 glitchTile.summQuote = "0000";
 glitchTile.quote = "10010101...";
 glitchTile.deathQuote = "2";
 glitchTile.pointsToSummon = 40;
 presetTiles.push(glitchTile);
+
+//Heal at descent
+tulipMageTile = new tile('Tulip Mage', 3, 2, "<strong>Heals</strong> itself to full health after <strong>descending</strong>.", 'tulipMage');
+tulipMageTile.summQuote = "I must not fall!";
+tulipMageTile.quote = "I'll do what I can!";
+tulipMageTile.deathQuote = "Noo..!";
+tulipMageTile.specQuote = "Refreshed and ready!";
+tulipMageTile.pointsToSummon = 30;
+
+
+tulipMageTile.buffs.push(photosynthesisBuff);
+
+
+presetTiles.push(tulipMageTile);
+
 
 
 
@@ -120,6 +135,6 @@ player = makeATile(playerTile, false, true);
 
 testMin = makeATile(flyTile, true, true);
 
-for (var i = 0; i < 3; i++) {
-  testMin = makeATile(skeletonTile, false);
+for (var i = 0; i < 5; i++) {
+  testMin = makeATile(tulipMageTile, false);
 };

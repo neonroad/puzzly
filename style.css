@@ -19,7 +19,8 @@ body{
   width:300px;
   top:0px;
   text-align: center;
-  display: block;
+  /*z-index: -1;*/
+  display: inline-block;
 }
 
 #tileCost{

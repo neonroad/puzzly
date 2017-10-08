@@ -40,6 +40,8 @@ var skipguy = 0; //if necessary, skip updating this guy
 //Preset tiles saved in an array for convenience?
 presetTiles = [];
 
+presetBuffs = [];
+
 //"borrowed" code for random int
 
 function getRandomIntInclusive(min, max) {
@@ -88,10 +90,25 @@ fight = function(guy1, guy2){ //1 = playerside
   skipguy = 0;
 };
 
+//healing
+healTile = function(tile, hp){
+  tile.hp += hp;
+  tile.update();
+}
+
 //Targeting
 
 targeting = 0;
 fighter = "";
+
+updateBoard = function(){
+  for (var i = 0; i < enemySideMin.length; i++) {
+    enemySideMin[i].update();
+  };
+  for (var i = 0; i < playerSideMin.length; i++) {
+    playerSideMin[i].update();
+  };
+}
 
 //find in array function
 findInArray = function(search, array){
@@ -108,6 +125,23 @@ checkIfFull = function(array){
     return true;
   }
   return false;
+}
+
+//Check for activated buffs
+checkForBuffs = function(condition, side){
+
+  for (var i = 0; i < side.length; i++) {
+    
+
+    for (var b = 0; b < side[i].buffs.length; b++) {
+
+  
+      if(side[i].buffs[b].type == condition){
+        side[i].buffs[b].activate();
+      }
+    };
+  };
+  
 }
 
 //the final step of casting a spell
@@ -189,6 +223,10 @@ makeASummon = function(summonTile){
   newTile.specQuote = summonTile.specQuote;
   newTile.pointsToSummon = summonTile.pointsToSummon;
 
+  for (var i = 0; i < summonTile.buffs.length; i++) {
+    newTile.buffs.push(makeABuff(summonTile.buffs[i]));
+  };
+
   newTile.createSummon();
   newTile.update();
   summonHand.push(newTile);
@@ -245,8 +283,13 @@ surrenderSide = function(side){
 }
 
 nextLevel = function(){
+
+    History.innerHTML += "<br><span id='friendlyCombat'>You descend!</span><br>";
+
     dLevel++;
     descend = 1;
+
+    checkForBuffs('descent', playerSideMin);
 
     for (var i = 0; i < playerSideMin.length; i++) {
       points += 5;
@@ -257,13 +300,22 @@ nextLevel = function(){
 
     makeATile(presetTiles[getRandomIntInclusive(0,presetTiles.length-1)], true, true);
 
-    for(var x = 0; x < getRandomIntInclusive(0,enemySideMin.maxLength-1); x ++){
+    for(var x = 0; x < getRandomIntInclusive(1,enemySideMin.maxLength-1); x ++){
       makeATile(presetTiles[getRandomIntInclusive(0,presetTiles.length-1)], true);
     }
     descend = 0;
+    //updateBoard();
 
 
 
+}
+
+//Describe a buff
+buff = function(name, type, healthy){
+  this.parent = undefined;
+  this.name = name;
+  this.type = type;
+  this.healthy = healthy;
 }
 
 //Describing what a 'tile' holds
@@ -274,7 +326,6 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
   this.originalName = name;
   this.position = position;
   this.buffs = [];
-  this.spell = false;
   this.name = name;
   this.hp = hp;
   this.maxhp = hp;
@@ -282,6 +333,7 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
   this.special = special;
   this.imageURL = imageURL;
   this.friendly = 0;
+  this.rank = 1;
 
   this.summoning = false;
   this.pointsToSummon = 0;
@@ -290,6 +342,7 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
   this.quote = "";
   this.deathQuote = "";
   this.specQuote = "";
+
 
   this.createTile = function(){
     this.tileElement = document.createElement("div");
@@ -323,10 +376,7 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
       this.tileElement.setAttribute("id","enemy");
     }
 
-    //Other
-    else if(this.spell == true){
-      this.tileElement.setAttribute("id", "friendlyMage");
-    }
+    
     else if(this.friendly ==1){
       this.tileElement.setAttribute("id","friendly");
     }
@@ -379,8 +429,7 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
     History.innerHTML += "<br><br><span id='friendlyName'>" + this.name + "</span>:<span id='quote'>\"" + this.summQuote + "\"</span>"; 
     History.innerHTML += "<br><span id='friendlyName'>" + this.name + "</span><span id='friendlyCombat'> was <strong>summoned</strong></span>.<br>";
 
-    console.log(this.summoning);
-    console.log(summonHand[0].summoning);
+    
     if(findInArray(this, summonHand) != undefined){
       summonHand.splice(findInArray(this,summonHand), 1);
       currentTile.remove();
@@ -388,6 +437,13 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
   }
   
   this.update = function(){
+
+    //define parent for buffs
+    for (var i = 0; i < this.buffs.length; i++) {
+      this.buffs[i].parent = this;
+    };
+
+
 
     //If currentTile exists and this tile is FRIENDLY
     if(currentTile != undefined && this.friendly == 1 && !this.summoning){
@@ -398,12 +454,12 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
       currentTile.onmousedown = function(){
         
         //If the tile can attack
-        if(targeting == 0 && this.parent.atk >= 1 && this.parent.spell == false){
+        if(targeting == 0 && this.parent.atk >= 1){
           target(this.parent);
         }
 
         //if the tile has no attack
-        else if(targeting == 0 && this.parent.atk < 1 && this.parent.spell == false){
+        else if(targeting == 0 && this.parent.atk < 1){
           History.innerHTML = "This minion has no attack.";
         }
 
@@ -475,6 +531,7 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
     if(this.hp <= 0 || this.markForDeath){
       this.markForDeath = true;
       //this.name = "DEAD";
+
 
       if(currentTile.id == "enemy"){
   
@@ -551,29 +608,7 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
       }
 
     }
-    
-    if(this.spell == true){
-      
-      currentTile.innerHTML= "<img src='assets/"+ imageURL + ".png' height='100' width='100'><span id='name'> <br>"
-      +this.name +":<br><strong>"+this.hp+ "/" + this.maxhp + "</strong> Health<strong><br>"+this.mna+ "/" + this.maxmna + "</strong> Mana<br>---<br>"+this.special;
 
-      if(currentTile.id == "unfriendly"){
-        //currentTile.id = "unfriendly";
-      }
-
-      else{
-        //currentTile.innerHTML="<img src='assets/"+ imageURL + ".png' height='100' width='100'><span id='name'> <br>"+this.name +"<br><strong>"+this.hp+"</strong> Health<strong><br>"+this.mna+"</strong> Mana<br>---<br>"+this.special;
-        //console.log(this.costs);
-        if(this.costs > this.mna){
-          //console.log("OOM!");
-          currentTile.id = "friendlyMageLow";
-        }
-        else{
-          currentTile.id = "friendlyMage";
-        }
-      }
-      
-    }
     //if(this.hp > 0){
 
     if(this.cardText != undefined){
@@ -594,6 +629,13 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
 
 };
 
+makeABuff = function(buffB){
+  newBuff = new buff(buffB.name, buffB.type, buffB.healthy);
+  //newBuff.parent = tile;
+  newBuff.activate = buffB.activate;
+  return newBuff;
+
+}
 
 makeATile = function(tileT, enemy, main, incarnation){
   newTile = new tile(tileT.name, tileT.hp, tileT.atk, tileT.special, tileT.imageURL);
@@ -604,6 +646,12 @@ makeATile = function(tileT, enemy, main, incarnation){
   newTile.deathQuote = tileT.deathQuote;
   newTile.specQuote = tileT.specQuote;
   newTile.pointsToSummon = tileT.pointsToSummon;
+
+  for (var i = 0; i < tileT.buffs.length; i++) {
+    newTile.buffs.push(makeABuff(tileT.buffs[i]));
+  };
+
+  //newTile.buffs = tileT.buffs;
 
   if(main){
     newTile.mainTile = 1;
@@ -633,5 +681,3 @@ makeATile = function(tileT, enemy, main, incarnation){
   }
   return undefined;
 }
-
-
