@@ -26,7 +26,7 @@ playerSideMin.maxLength = 8;
 
 //Summoning hand
 var summonHand = [];
-summonHand.maxLength = 10;
+summonHand.maxLength = 4;
 var points = 0;
 
 //dungeon levels, used for later
@@ -39,6 +39,10 @@ var skipguy = 0; //if necessary, skip updating this guy
 
 //Preset tiles saved in an array for convenience?
 presetTiles = [];
+
+presetTokens = [];
+
+legendaries = [];
 
 presetBuffs = [];
 
@@ -93,7 +97,35 @@ fight = function(guy1, guy2){ //1 = playerside
 //healing
 healTile = function(tile, hp){
   tile.hp += hp;
-  tile.update();
+  //tile.update();
+}
+
+hurtTile = function(tile, dmg){
+  tile.hp -= dmg;
+  //tile.update();
+}
+
+checkForOriginal = function(tileA){
+  if(tileA.rank == 'legendary'){
+    for (var i = 0; i < legendaries.length; i++) {
+      if(legendaries[i].originalName == tileA.originalName){
+        return legendaries[i];
+      }
+    };
+  }
+  else{
+    for (var i = 0; i < presetTiles.length; i++) {
+      if(presetTiles[i].originalName == tileA.originalName){
+        return presetTiles[i];
+      }
+    };
+  }
+  for (var i = 0; i < presetTokens.length; i++) {
+    if(presetTokens[i].originalName == tileA.originalName){
+      return presetTokens[i];
+    }
+  };
+  return undefined;
 }
 
 //Targeting
@@ -129,7 +161,7 @@ checkIfFull = function(array){
 
 //Check for activated buffs
 checkForBuffs = function(condition, side){
-
+  var currentUpdate = undefined;
   for (var i = 0; i < side.length; i++) {
     
 
@@ -137,7 +169,18 @@ checkForBuffs = function(condition, side){
 
   
       if(side[i].buffs[b].type == condition){
+
+        currentUpdate = side[i];
         side[i].buffs[b].activate();
+        
+        if(side[i] != currentUpdate ){
+          i --;
+          //side[i].update();
+        }
+        else{
+          side[i].update();
+        }
+
       }
     };
   };
@@ -214,8 +257,9 @@ despelltarget = function(tile){
   cast(fighter,tile,fighter.tome);
 }
 
+//creating a 'summon' tile
 makeASummon = function(summonTile){
-  newTile = new tile(summonTile.name, summonTile.hp, summonTile.atk, summonTile.special, summonTile.imageURL);
+  newTile = new tile(summonTile.name, summonTile.hp, summonTile.atk, summonTile.special, summonTile.imageURL, summonTile.rank);
 
   newTile.summQuote = summonTile.summQuote;
   newTile.quote = summonTile.quote;
@@ -230,8 +274,10 @@ makeASummon = function(summonTile){
   newTile.createSummon();
   newTile.update();
   summonHand.push(newTile);
+  return newTile;
 }
 
+//Move all minions to other side
 surrenderSide = function(side){
 
   for (var i = 0; i < side.length; i++) {
@@ -245,14 +291,17 @@ surrenderSide = function(side){
       //History text
       if(t.friendly != 1 && tempTile != undefined){
         History.innerHTML += "<br><span id='unfriendlyName'>" + t.name + "</span> surrendered!";
-
+        if(!checkIfFull(summonHand) && checkForOriginal(t) != undefined){
+          makeASummon(checkForOriginal(t))
+        }
+        /*
         for (var y = 0; y < presetTiles.length; y++) {
 
           if(presetTiles[y].originalName == t.originalName && !checkIfFull(summonHand)){
             makeASummon(presetTiles[y]);
           }
 
-        };
+        };*/
 
       }
       else if(t.friendly != 1 && tempTile == undefined){
@@ -264,10 +313,7 @@ surrenderSide = function(side){
       else if(t.friendly == 1 && tempTile == undefined){
         History.innerHTML += "<br><span id='friendlyName'>" + t.name + "</span> ran away!";
       }
-      //t.currentTile.remove();
 
-      //tempTile.update();
-      //New tile
 
     }
     //t.currentTile.remove();
@@ -282,6 +328,7 @@ surrenderSide = function(side){
   
 }
 
+//descent
 nextLevel = function(){
 
     History.innerHTML += "<br><span id='friendlyCombat'>You descend!</span><br>";
@@ -289,16 +336,28 @@ nextLevel = function(){
     dLevel++;
     descend = 1;
 
+    //check for descend buffs and ACTIVATE them
     checkForBuffs('descent', playerSideMin);
 
+
+    //Add points
     for (var i = 0; i < playerSideMin.length; i++) {
       points += 5;
       pointUpdate();
     };
 
+    //Surrender enemy minions
     surrenderSide(enemySideMin);
 
-    makeATile(presetTiles[getRandomIntInclusive(0,presetTiles.length-1)], true, true);
+    //---------------------------
+    //Make the next level
+    var legendaryLevel = getRandomIntInclusive(1,10);
+    if(legendaryLevel == 1){
+      makeATile(legendaries[getRandomIntInclusive(0,legendaries.length-1)],true,true);
+    }
+    else{
+      makeATile(presetTiles[getRandomIntInclusive(0,presetTiles.length-1)], true, true);
+    }
 
     for(var x = 0; x < getRandomIntInclusive(1,enemySideMin.maxLength-1); x ++){
       makeATile(presetTiles[getRandomIntInclusive(0,presetTiles.length-1)], true);
@@ -319,12 +378,12 @@ buff = function(name, type, healthy){
 }
 
 //Describing what a 'tile' holds
-tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the name of the file stored in assets WITHOUT the extension
+tile = function(name,hp,atk,special,imageURL,rank){ //imageurl is just the name of the file stored in assets WITHOUT the extension
   var currentTile;
   this.cardText;
   this.tileElement;
   this.originalName = name;
-  this.position = position;
+  //this.position = position;
   this.buffs = [];
   this.name = name;
   this.hp = hp;
@@ -333,8 +392,7 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
   this.special = special;
   this.imageURL = imageURL;
   this.friendly = 0;
-  this.rank = 1;
-
+  this.rank = rank;
   this.summoning = false;
   this.pointsToSummon = 0;
 
@@ -343,6 +401,10 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
   this.deathQuote = "";
   this.specQuote = "";
 
+  if(rank == undefined){
+    //console.log("no rank defined for " + this.name);
+    this.rank = "common";
+  }
 
   this.createTile = function(){
     this.tileElement = document.createElement("div");
@@ -372,8 +434,12 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
     }
 
     //Enemy Main
-    else if(this.mainTile == 1 && this.friendly == 0){
+    else if(this.mainTile == 1 && this.friendly == 0 && this.rank != 'legendary'){
       this.tileElement.setAttribute("id","enemy");
+    }
+
+    else if(this.mainTile == 1 && this.friendly == 0 && this.rank == 'legendary'){
+      this.tileElement.setAttribute("id","legendaryEnemy");
     }
 
     
@@ -384,8 +450,13 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
       this.tileElement.setAttribute("id","unfriendly");
     }
     
-    this.tileElement.setAttribute("class","tile");
 
+    if(this.rank == 'legendary'){
+      this.tileElement.setAttribute("class", "legendaryTile");
+    }
+    else{
+      this.tileElement.setAttribute("class","tile");
+    }
 
     //this.tileElement.innerHTML="<img src='assets/"+ imageURL + ".png' height='100' width='100'><span id='name'> <br>"
     //+this.name +":<br><strong>"+this.hp+"</strong> Health<strong><br>"+this.atk+"</strong> Attack<br>---<br>"+this.special;
@@ -396,7 +467,13 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
 
   this.createSummon = function(){
     this.tileElement = document.createElement("div");
-    this.tileElement.setAttribute("class","tileSummon");
+
+    if(this.rank == 'legendary'){
+      this.tileElement.setAttribute("class","legendaryTileSummon");      
+    }
+    else{
+      this.tileElement.setAttribute("class","tileSummon");
+    }
 
     this.costElement = document.createElement("div");
     this.costElement.setAttribute("id","tileCost");
@@ -423,8 +500,8 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
   }
 
   this.summon = function(){
-    points -= this.pointsToSummon;
-    pointUpdate();
+    // points -= this.pointsToSummon;
+    // pointUpdate();
     makeATile(this, false);
     History.innerHTML += "<br><br><span id='friendlyName'>" + this.name + "</span>:<span id='quote'>\"" + this.summQuote + "\"</span>"; 
     History.innerHTML += "<br><span id='friendlyName'>" + this.name + "</span><span id='friendlyCombat'> was <strong>summoned</strong></span>.<br>";
@@ -434,6 +511,27 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
       summonHand.splice(findInArray(this,summonHand), 1);
       currentTile.remove();
     }
+  }
+
+  this.discard = function(){
+    if(findInArray(this, summonHand) != undefined){
+      summonHand.splice(findInArray(this,summonHand), 1);
+      currentTile.remove();
+    }
+  }
+
+  this.removeSafely = function(){
+    var side = enemySideMin;
+
+    if(this.friendly){
+      side = playerSideMin;
+    }
+
+    if(findInArray(this,side) != undefined){
+      side.splice(findInArray(this,side),1);      
+    }
+    currentTile.remove();
+    
   }
   
   this.update = function(){
@@ -496,6 +594,8 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
       currentTile.parent = this;
       currentTile.onmousedown = function(){
         if(targeting == 0 && playerSideMin.length < playerSideMin.maxLength && points >= this.parent.pointsToSummon){
+          points -= this.parent.pointsToSummon;
+          pointUpdate();         
           this.parent.summon();
         }
         else if(targeting == 0 && playerSideMin.length >= playerSideMin.maxLength && points >= this.parent.pointsToSummon){
@@ -533,7 +633,7 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
       //this.name = "DEAD";
 
 
-      if(currentTile.id == "enemy"){
+      if(currentTile.id == "enemy" || currentTile.id == "legendaryEnemy"){
   
         History.innerHTML += "<br><br><span id='quote'><span id='unfriendlyName'>" + this.name + "</span>: \"" + this.deathQuote + "\"</span>";
 
@@ -561,7 +661,7 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
 
 
       }
-      else if(currentTile.id == "friendly" || currentTile.id == "friendlyMage" || currentTile.id == "friendlyMageLow" || currentTile.id == "selected"){
+      else if(currentTile.id == "friendly" || currentTile.id == "selected"){
         History.innerHTML += "<br><br><span id='quote'><span id='friendlyName'>" + this.name + "</span>: \"" + this.deathQuote + "\"</span>";
         History.innerHTML += "<br><span id='death'><span id='friendlyName'>"+ this.name + "</span> died.</span><br>";
 
@@ -582,9 +682,21 @@ tile = function(name,hp,atk,special,imageURL,position){ //imageurl is just the n
       else if(currentTile.id == "player"){
         History.innerHTML += "<br><br><span id='quote'><span id='friendlyName'>" + this.name + "</span>: \"" + this.deathQuote + "\"</span>";
         History.innerHTML += "<br><span id='death'><span id='friendlyName'>"+ name + " died.</span><br>";
-        playerSideMin.splice(this.position, 1, "")
-        playerSide.removeChild(currentTile);
-        Fdivnum--;
+        //playerSideMin.splice(this.position, 1, "")
+
+        if(this.markForDeath == true){
+          //this.actualtile.id = "friendly";
+
+          //find in array
+          if(findInArray(this,playerSideMin) != undefined){
+            playerSideMin.splice(findInArray(this,playerSideMin), 1)            
+          }
+
+          //remove HTML
+          currentTile.remove();
+          
+        }
+
         lose = 1;
         alert("You lose!");
       }
@@ -638,7 +750,10 @@ makeABuff = function(buffB){
 }
 
 makeATile = function(tileT, enemy, main, incarnation){
-  newTile = new tile(tileT.name, tileT.hp, tileT.atk, tileT.special, tileT.imageURL);
+  //create tile
+  newTile = new tile(tileT.name, tileT.hp, tileT.atk, tileT.special, tileT.imageURL, tileT.rank);
+  
+  //check if the tile was created already
   var created = false;
 
   newTile.summQuote = tileT.summQuote;

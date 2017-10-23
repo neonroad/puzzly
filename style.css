@@ -17,7 +17,8 @@ body{
   border: solid #D4A44D 5px;
   border-radius:10px;
   width:300px;
-  top:0px;
+  right:-10px;
+  top:-5px;
   text-align: center;
   /*z-index: -1;*/
   display: inline-block;
@@ -53,6 +54,19 @@ body{
   position: relative;
 }
 
+.legendaryTile{
+  
+  font-family:Verdana;
+  overflow:auto;
+  width:121px;
+  height:200px;
+  background-color: #E8E538;
+  border: solid #5E5D1B 5px;
+  font-size: 10px;
+  display:inline-block;
+  position: relative;
+}
+
 .tileSummon{
   font-family:Verdana;
   overflow:auto;
@@ -65,13 +79,33 @@ body{
   position: relative;
 }
 
+.legendaryTileSummon{
+  font-family:Verdana;
+  overflow:auto;
+  width:121px;
+  height:200px;
+  background-color: #6D43B0;
+  border: solid black 5px;
+  font-size: 10px;
+  display:inline-block;  
+  position: relative;
+}
+
 .tileSummon:hover{
   border:solid green 5px;
+}
+
+.legendaryTileSummon:hover{
+  border:solid #C0AFDB 5px;
 }
 
 .tile:hover{
   
   border: solid yellow 5px;
+}
+
+.legendaryTile:hover{
+  border: solid #EDAD24 5px;
 }
 
 #summonUnavailable{
@@ -96,6 +130,14 @@ body{
 
 #enemy:hover{
   border: solid red 5px;
+}
+
+#legendaryEnemy{
+  background-color: #EB8500; 
+}
+
+#legendaryEnemy:hover{
+  border:solid red 5px;
 }
 
 #unfriendly:hover{
@@ -137,8 +179,13 @@ body{
   position:relative;
   border: solid #D4A44D 5px;
   border-radius:10px;
-  width:1050px;
+  width:1350px;
   margin:auto
+}
+
+#playerside, #enemyside{
+  width:1050px;
+  /*background-color: red;*/
 }
 
 #space{
