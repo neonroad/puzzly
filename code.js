@@ -14,6 +14,7 @@ var lose = 0;
 //toUpdate is an array that holds tiles that need to be updated at the end of an action
 toUpdate = [];
 var ongoingUpdate = 0; //0 if the array is empty
+var cancelOngoingActions = false;
 
 //Define sides as lists
 var enemySideMin = [];
@@ -67,13 +68,6 @@ fight = function(guy1, guy2){ //1 = playerside
   History.innerHTML+="<br><span id='quote'><span id='friendlyName'>"+guy1.name + "</span>: \"" + guy1.quote + "\"</span><br>";
 
   
-  if(guy1.mainTile == 1){
-    //guy1.actualtile.id = "player";
-  }
-  else{
-   // guy1.actualtile.id = "friendly";
-  }
-  
   guy1.hp -= guy2.atk;
   History.innerHTML += "<br><span id='friendlyCombat'> <span id='friendlyName'>" + guy1.name + "</span> attacked <span id='unfriendlyName'>" + guy2.name + "</span> for <span id='unfriendlyName'>" + guy1.atk + "</span> damage.</span>";
 
@@ -81,11 +75,21 @@ fight = function(guy1, guy2){ //1 = playerside
   guy2.hp -= guy1.atk;
   History.innerHTML += "<br><span id='friendlyCombat'>In return, <span id='unfriendlyName'>" + guy2.name + "</span> did <span id='unfriendlyName'>" + guy2.atk + "</span> damage to <span id='friendlyName'>" + guy1.name + "</span>.</span>"; 
 
-  
+  checkForIndBuffs(guy1, 'beforeFight', guy2);
+
+  checkForIndBuffs(guy2, 'beforeFight', guy1);
+
+  // if(!guy1.markForDeath){
+  //   guy1.update();
+  // }
   guy1.update();
-
-
   guy2.update();
+
+  checkForIndBuffs(guy1, 'afterFight', guy2);
+  checkForIndBuffs(guy2, 'afterFight', guy1);
+  // if(!guy2.markForDeath){
+  //   guy2.update();
+  // }
   
   targeting = 0;
 
@@ -159,26 +163,53 @@ checkIfFull = function(array){
   return false;
 }
 
+//check infividual for buffs
+checkForIndBuffs = function(tile, condition, special){
+  if(tile != undefined){
+
+    for (var i = 0; i < tile.buffs.length; i++) {
+      if(tile.buffs[i].type == condition){
+        
+        if(condition == 'beforeFight' || condition == 'afterFight'){
+          
+          tile.buffs[i].activate(special);
+        }
+        else{
+          tile.buffs[i].activate()
+          tile.update();
+        }
+      }
+      if(condition != 'death' && condition != 'beforeFight' && condition != 'afterFight' && !tile.markForDeath){
+        //tile.update();
+      }
+    };
+  
+  }
+
+}
+
 //Check for activated buffs
 checkForBuffs = function(condition, side){
   var currentUpdate = undefined;
   for (var i = 0; i < side.length; i++) {
-    
+    //console.log(i<side.length);
 
     for (var b = 0; b < side[i].buffs.length; b++) {
 
   
-      if(side[i].buffs[b].type == condition){
+      if(side[i].buffs[b].type == condition && condition != 'death'){
 
         currentUpdate = side[i];
         side[i].buffs[b].activate();
         
-        if(side[i] != currentUpdate ){
-          i --;
-          //side[i].update();
-        }
-        else{
-          side[i].update();
+        if(side[i] != undefined){
+
+          if(side[i].update() == true ){
+            i --;
+            break;
+            //side[i].update();
+          }
+        
         }
 
       }
@@ -188,27 +219,6 @@ checkForBuffs = function(condition, side){
 }
 
 //the final step of casting a spell
-cast = function(guy1, guy2, tome){
-  if(tome == "Magic Missile"){
-    if(guy1.mna >= 2){
-      guy1.mna -= 2;
-      guy2.hp -= 2 + spellDMG;
-      History.innerHTML += "<br>" + guy1.name + " cast " + tome + " on " + guy2.name + " for " + (2+spellDMG) + " damage!";
-    }
-  }
-  else if(tome == "Lesser Heal"){
-    guy1.mna -= 3;
-    guy2.hp += 2;
-    History.innerHTML += "<br>" + guy1.name + " cast " + tome + " on " + guy2.name + " and gave "+ guy2.name +" 2 health!";
-    guy2.unupdate = 1;
-  }
-  guy1.update();
-  guy2.update();
-  targeting = 0;
-  fighter = "";
-  skipguy = 0;
-  $("body").css("cursor","auto");
-}
 
 //clicking a friendly minion
 target = function(tile){
@@ -277,43 +287,59 @@ makeASummon = function(summonTile){
   return newTile;
 }
 
-//Move all minions to other side
-surrenderSide = function(side){
+//surrender one tile
+surrenderTile = function(tile){
+  //console.log(tile.name + ' prob already updated surrender');
+  //console.log(tile);
+  if(!tile.markForDeath && tile != undefined){
+    //console.log(tile.name + " qualified..");
+    var tempTile = makeATile(tile, tile.friendly, false, true);
+    if(!tile.friendly && tempTile != undefined){
 
+      History.innerHTML += "<br><span id='unfriendlyName'>" + tile.name + "</span> surrendered!";
+
+      if(!checkIfFull(summonHand) && checkForOriginal(tile) != undefined){
+        makeASummon(checkForOriginal(tile))
+      }      
+    }
+
+    else if(tile.friendly != 1 && tempTile == undefined){
+      History.innerHTML += "<br><span id='unfriendlyName'>" + tile.name + "</span> ran away!";
+    }
+    else if(tile.friendly == 1 && tempTile != undefined){
+      History.innerHTML += "<br><span id='friendlyName'>" + tile.name + "</span> surrendered!";
+    }
+    else if(tile.friendly == 1 && tempTile == undefined){
+      History.innerHTML += "<br><span id='friendlyName'>" + tile.name + "</span> ran away!";
+    }
+
+    tile.removeSafely();
+    checkForIndBuffs(tempTile, 'surrender');
+  }
+  if(tile != undefined && !tile.markForDeath){
+    tile.update();
+  }
+}
+
+
+//Move all tiles to other side
+surrenderSide = function(side){
+  //console.log(side + "enemy?");
+  //checkForBuffs('surrender', side);
   for (var i = 0; i < side.length; i++) {
     var t = side[i];
     if(t.mainTile != 1){
       //t.update();
-      var tempTile = makeATile(t, t.friendly, false, true); //it is an incarnation, so set its maxhp BEFORE updating
-      //tempTile.maxhp = t.maxhp;
-      //console.log(t);
+      //checkForIndBuffs(t, 'surrender'); //tile gets updated
 
-      //History text
-      if(t.friendly != 1 && tempTile != undefined){
-        History.innerHTML += "<br><span id='unfriendlyName'>" + t.name + "</span> surrendered!";
-        if(!checkIfFull(summonHand) && checkForOriginal(t) != undefined){
-          makeASummon(checkForOriginal(t))
-        }
-        /*
-        for (var y = 0; y < presetTiles.length; y++) {
-
-          if(presetTiles[y].originalName == t.originalName && !checkIfFull(summonHand)){
-            makeASummon(presetTiles[y]);
-          }
-
-        };*/
+      if(!t.markForDeath){
+        surrenderTile(t);
+        i--;
 
       }
-      else if(t.friendly != 1 && tempTile == undefined){
-        History.innerHTML += "<br><span id='unfriendlyName'>" + t.name + "</span> ran away!";
+      else{
+        i--;
       }
-      else if(t.friendly == 1 && tempTile != undefined){
-        History.innerHTML += "<br><span id='friendlyName'>" + t.name + "</span> surrendered!";
-      }
-      else if(t.friendly == 1 && tempTile == undefined){
-        History.innerHTML += "<br><span id='friendlyName'>" + t.name + "</span> ran away!";
-      }
-
 
     }
     //t.currentTile.remove();
@@ -321,8 +347,7 @@ surrenderSide = function(side){
 
   
   for (var i = side.length-1; i >=0; i--) {
-    side[i].currentTile.remove();
-    side.splice(i,1);
+    //side[i].removeSafely();
   };
   //out of loop
   
@@ -330,6 +355,7 @@ surrenderSide = function(side){
 
 //descent
 nextLevel = function(){
+    cancelOngoingActions = true;
 
     History.innerHTML += "<br><span id='friendlyCombat'>You descend!</span><br>";
 
@@ -364,6 +390,7 @@ nextLevel = function(){
     }
     descend = 0;
     //updateBoard();
+    //cancelOngoingActions = false;
 
 
 
@@ -558,12 +585,12 @@ tile = function(name,hp,atk,special,imageURL,rank){ //imageurl is just the name 
 
         //if the tile has no attack
         else if(targeting == 0 && this.parent.atk < 1){
-          History.innerHTML = "This minion has no attack.";
+          History.innerHTML = "This tile has no attack.";
         }
 
         //if aiming at friendly minion
         else if(targeting == 1 && this.parent.friendly == 1){
-          History.innerHTML = "You can't attack friendly minions!";
+          History.innerHTML = "You can't attack friendly tiles!";
           cancelTarget();
         }
       }
@@ -579,7 +606,7 @@ tile = function(name,hp,atk,special,imageURL,rank){ //imageurl is just the name 
 
         //clicking an enemy first
         if(targeting == 0){
-          History.innerHTML = "You have to choose a minion from your side to attack with!";
+          History.innerHTML = "You have to choose a tile from your side to attack with!";
         }
 
         //fighting
@@ -639,25 +666,22 @@ tile = function(name,hp,atk,special,imageURL,rank){ //imageurl is just the name 
 
         History.innerHTML += "<br><span id='death'> (Main tile) <span id='unfriendlyName'>"+ this.name + "</span> died.</span><br>";
 
+        
+        
         //skipguy = 2;
         if(findInArray(this,enemySideMin) != undefined){
           enemySideMin.splice(findInArray(this,enemySideMin), 1)            
         }
 
-        //console.log(currentTile);
         currentTile.remove();
-        //ongoingUpdate = 0;
-        // toUpdate = [];
-
+        
         if(lose !== 1 && ongoingUpdate == 0){
           
           nextLevel();
 
 
         }
-        else if(lose !== 1 && ongoingUpdate == 1){
-          
-        }
+        
 
 
       }
@@ -676,6 +700,7 @@ tile = function(name,hp,atk,special,imageURL,rank){ //imageurl is just the name 
 
           //remove HTML
           currentTile.remove();
+          
           
         }
       }
@@ -718,6 +743,8 @@ tile = function(name,hp,atk,special,imageURL,rank){ //imageurl is just the name 
           currentTile.remove();
         }
       }
+      //checkForIndBuffs(this, 'death');
+      return true;
 
     }
 
